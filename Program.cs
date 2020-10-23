@@ -1,60 +1,126 @@
 ﻿using System;
+using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading;
 
-namespace Calc
+namespace Lection3
 {
     class Program
     {
-        private static float Read()
+        private static string rightthetopcorner = "┌";
+        private static string thetopitersection = "┬";
+        private static string leftthetopcorner = "┐";
+        private static string rigthcentersection = "├";
+        private static string centersection = "┼";
+        private static string leftthecentersection = "┤";
+        private static string rigthbottomcross = "└";
+        private static string centerbottomsection = "┴";
+        private static string leftbottomcross = "┘";
+        private static string verticalbar = "│";
+        private static string horizontalbar = "─";
+        private static void WritePositionElement(string s, int x, int y, int deltay, int deltax)
         {
-            do
+            try
             {
-                try
-                {
-                    return float.Parse(Console.ReadLine());
-                }
-                catch
-                {
-                    Console.WriteLine("Некоректный ввод");
-                }
-            } while (true);
-        }
-        private static float MathFunctionDeclaration(float x)
-        {
-            float MathFunction = (x * x);
-            return MathFunction;
-        }
-        
-        public static float[] FunctionCounting(int step, float startofrange, float endofrange, int arr)
-        {
-            float[] y = new float[arr];
-            for (int i = 0; i < Math.Abs(arr); i++)
-            {
-                y[i] = MathFunctionDeclaration(startofrange);
-                Console.WriteLine(y[i]);
-                startofrange = startofrange + step;
+                Console.SetCursorPosition(x + deltax, y + deltay);
+                Console.Write(s);
             }
-            return y;
-        }
-        static void Main()
-        {
-            Console.WriteLine("Введите шаг функции");
-            int step = Convert.ToInt32(Console.ReadLine());
-            Console.WriteLine("Введите с какого значения требуется начать вычисление");
-            float startofrange = Read();
-            Console.WriteLine("Введите до какого значения требуется вычисление функции");
-            float endofrange = Read();
-            //int delta = (startofrange < 0 && endofrange < 0) ? -1 : 1;
-            int arr = Convert.ToInt32(Math.Abs(Math.Abs(Math.Abs(startofrange) - Math.Abs(endofrange)) + 1/*delta*/));
-            Program ob = new Program();
-            float[] ar = Program.FunctionCounting(step, startofrange, endofrange, arr);
-            //ar = Program.FunctionCounting();
-            //Console.WriteLine("шаг - {0}; Стартовое значение - {1}; Финальное значение - {2}", step, startofrange, endofrange);
-            //Program.FunctionCounting();
-            for (int i = 0; i < (arr); i++)
+            catch
             {
-                Console.WriteLine("Значение {0} = {1}", i,ar[i]);
+                Console.Clear();
+                Console.WriteLine("Вышел за пределы буфера?");
+                Console.WriteLine("Размер буфера {0} полей. PositionField = {1}", Console.BufferWidth, x);
+                Console.WriteLine("PositionField[i + 1] = {0}", y);
             }
         }
+
+        private static bool ChoisVerticalBar(int i, int j, int wC, int sTTop, int xCoordinate, int yCoordinate, int sL)
+        {
+            return (((((i % wC) == 0) && (i != sTTop) && (i != xCoordinate - 1)) && (j != sL))
+                || (i == xCoordinate) && (j != sL) && (j == yCoordinate) || (i == sTTop) || (i == xCoordinate - 1));
+        }
+
+        private static bool ChoisHorizontalBar(int i, int j, int hF, int sTTop, int xCoordinate, int yCoordinate, int sL)
+        {
+            return (i != sTTop) && ((j == (yCoordinate - 1)) || (j == sL)) && (i != xCoordinate) || ((j % hF == 0));
+        }
+
+        private static /*int[,]*/ void PositionFields(int wF, int hF, int sTTop, int sL, int hC, int wC)
+        {
+            int xCoordinate = wF * wC + sL;
+            int yCoordinate = hF * hC + sTTop;
+            string[,] position = new string[xCoordinate, yCoordinate];
+            for (int i = sL; i < (xCoordinate); i++)
+            {
+                for (int j = sTTop; j < (yCoordinate); j++)
+                {
+                    
+                    if (ChoisHorizontalBar(i, j, hF, sTTop, xCoordinate, yCoordinate, sL))
+                    {
+                        position[i, j] = horizontalbar;
+                    }
+                    if (ChoisVerticalBar(i, j, wC, sTTop, xCoordinate, yCoordinate, sL))
+                    {
+                        position[i, j] = verticalbar;
+                    }
+                    if ((((i % wC) == 0) && (i != sTTop) && (i != xCoordinate - 1)) && (j == sL))
+                    {
+                        position[i, j] = thetopitersection;
+                    }
+                    if (((i % wC) == 0) && (j == yCoordinate - 1))
+                    {
+                        position[i, j] = centerbottomsection;
+                    }
+                    if ((i == sTTop) && (j == sL))
+                    {
+                        position[i, j] = rightthetopcorner;
+                    }
+                    if ((i == sTTop) && (j == yCoordinate - 1))
+                    {
+                        position[i, j] = rigthbottomcross;
+                    } 
+                    if ((i == xCoordinate - 1) && (j == sTTop))
+                    {
+                        position[i, j] = leftthetopcorner;
+                    }
+                    if ((i == (xCoordinate - 1)) && (j == yCoordinate - 1))
+                    {
+                        position[i, j] = leftbottomcross;
+                    }
+                    if (ChoisVerticalBar(i, j, wC, sTTop, xCoordinate, yCoordinate, sL) 
+                        && ChoisHorizontalBar(i, j, hF, sTTop, xCoordinate, yCoordinate, sL) 
+                        && (i != sL) && (j != sTTop) && (i != xCoordinate - 1) && (j != yCoordinate - 1))
+                    {
+                        position[i, j] = centersection;
+                    }
+                    if ((j % hF == 0) && i == sL)
+                    {
+                        position[i, j] = rigthcentersection;
+                    }
+                    WritePositionElement(position[i, j], i, j, sTTop, sL);
+                    Thread.Sleep(10);
+                }
+            }
+        }
+
+static void Main()
+{
+
+    int widthField = 4;//ширина поля
+    int heightField = 2;//высота поля 
+    int stepTheTop = 1;//отступ сверху
+    int stepLeft = 1;//отступ слева
+    int heightCell = 4;// высота ячейки
+    int widthCell = 3;// ширина ячейки
+    int y = stepTheTop;
+    int x = stepLeft;
+    PositionFields(widthField, heightField, stepTheTop, stepLeft, heightCell, widthCell);
+    /*int[,] PositionFields = Program.PositionFields(widthField, heightField, stepTheTop, stepLeft, heightCell, widthCell);
+    for (int i = 0; i < ((widthField * heightField * heightCell * widthCell) * 2); i++)
+    {
+    }*/
+    Console.ReadKey();
+}
     }
 }
